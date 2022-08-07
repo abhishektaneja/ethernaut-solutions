@@ -1,0 +1,23 @@
+{
+  "name": "ethernaut-solutions",
+  "version": "1.0.0",
+  "description": "Hacking ethernaut levels",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abhishektaneja/ethernaut-solutions.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/abhishektaneja/ethernaut-solutions/issues"
+  },
+  "homepage": "https://github.com/abhishektaneja/ethernaut-solutions#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.7.2",
+    "@remix-project/remixd": "^0.6.5"
+  }
+}
