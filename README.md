@@ -2,4 +2,4 @@
 
 Hacking ethernaut levels
 
-Just keeping my solutions I created to hack the levels in this repo!
+Just keeping my tries and solutions I created to hack the levels in this repo!
