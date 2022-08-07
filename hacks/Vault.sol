@@ -36,23 +36,7 @@ contract ValutBreaker {
         
     }
 
-    function setAddress(address _add) public{
-      external_contract_i = VaultA(_add);
-    }
-
-    function locked() public view returns(bool){
-      return external_contract_i.locked();
-    }
-
-    function unlock(string memory pass) public payable {
-      external_contract_i.unlock(stringToBytes32(pass));
-    }
-
-    function setNewPass(string memory pass) public{
-      (bool success,)  = address(external_contract_i).call(abi.encodeWithSignature("constructor(bytes32)", stringToBytes32(pass)));
-      require(success, 'Success was not true');
-    }
-
+  
     function stringToBytes32(string memory source) public pure returns (bytes32 result) {
       bytes memory tempEmptyStringTest = bytes(source);
       if (tempEmptyStringTest.length == 0) {
@@ -63,4 +47,10 @@ contract ValutBreaker {
           result := mload(add(source, 32))
       }
     }
+
+    /**
+
+    The way to hack this contract is: read storage using await web3.eth.getStorageAt(contract.address, 1)
+    Once you have the password , you can call the unlock function directly
+    **/
 }

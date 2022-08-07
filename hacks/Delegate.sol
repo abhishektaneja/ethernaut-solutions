@@ -4,12 +4,10 @@ pragma solidity ^0.8.7;
 contract Delegate {
 
   address public owner;
-  // 0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db
 
-  constructor(address _owner) public {
+  constructor(address _owner) {
     owner = _owner;
   }
-
 
   function pwn() public {
     owner = msg.sender;
@@ -21,7 +19,7 @@ contract Delegation {
   address public owner;
   Delegate delegate;
 
-  constructor(address _delegateAddress) public {
+  constructor(address _delegateAddress) {
     delegate = Delegate(_delegateAddress);
     owner = msg.sender;
   }
@@ -38,28 +36,29 @@ function getSender() public view returns(address) {
   }
 }
 
-interface Token { 
+interface DelegationI { 
   function owner() external view returns(address);
   function getSender() external view returns(address);
   function pwn() external;
 }
 
-contract SampleERC721  {
-   //using SafeMath for uint256;
+contract Hack  {
+   
     address external_contract;
-    Token external_contract_i;
+    DelegationI external_contract_i;
 
     address public constant OTHER_CONTRACT = 0xC4FA8Ef3914b2b09714Ebe35D1Fb101F98aAd13b;
 
     constructor(address _delegateAddress){
         external_contract = _delegateAddress;
-        external_contract_i = Token(_delegateAddress);
+        external_contract_i = DelegationI(_delegateAddress);
     }
 
     function getOwner() public returns(bytes memory) {
         (bool success, bytes memory data) = external_contract.call(abi.encodeWithSignature("owner()"));
+        require(success);
         return data;
-    }33008
+    }
 
     function getOwner1() public view returns(address) {
         return external_contract_i.owner();
@@ -75,6 +74,7 @@ contract SampleERC721  {
 
     function getTest() public returns(bytes memory) {
         (bool success, bytes memory data) = external_contract.call(abi.encodeWithSignature("getSender()"));
+        require(success);
         return data;
     }
 

