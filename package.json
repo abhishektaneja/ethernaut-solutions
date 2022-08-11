@@ -18,6 +18,7 @@
   "homepage": "https://github.com/abhishektaneja/ethernaut-solutions#readme",
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.2",
-    "@remix-project/remixd": "^0.6.5"
+    "@remix-project/remixd": "^0.6.5",
+    "hardhat-console": "^1.0.0"
   }
 }

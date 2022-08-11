@@ -48,6 +48,9 @@ interface CoinFlipI {
   function consecutiveWins() external view returns(uint);
 }
 
+/**
+blockhash(block.number.sub(1)) doesn't work on remix env
+**/
 contract Hack {
   using SafeMath for uint256;
   CoinFlipI coinflip;
