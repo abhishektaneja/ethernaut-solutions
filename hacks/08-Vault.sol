@@ -28,29 +28,11 @@ interface VaultA {
   function locked() external view returns(bool);
 }
 
-contract ValutBreaker {
-
-    VaultA external_contract_i;
-
-    constructor(){
-        
-    }
-
-  
-    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
-      bytes memory tempEmptyStringTest = bytes(source);
-      if (tempEmptyStringTest.length == 0) {
-          return 0x0;
-      }
-
-      assembly {
-          result := mload(add(source, 32))
-      }
-    }
+contract Hack {
 
     /**
-
-    The way to hack this contract is: read storage using await web3.eth.getStorageAt(contract.address, 1)
-    Once you have the password , you can call the unlock function directly
+     1. Read the storage: await web3.eth.getStorageAt(contract.address, 1)
+     2. call the contract.unlock with previous data
     **/
+    
 }

